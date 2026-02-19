@@ -10,9 +10,9 @@ const { sequelize, testConnection, runInitSql } = require("./config/database");
 const redisClient = require("./config/redis");
 
 // Routes
-const authRoutes    = require("./routes/authRoutes");
-const agentRoutes   = require("./routes/agentRoutes");
-const embedRoutes   = require("./routes/embedRoutes");
+const authRoutes = require("./routes/authRoutes");
+const agentRoutes = require("./routes/agentRoutes");
+const embedRoutes = require("./routes/embedRoutes");
 const sessionRoutes = require("./routes/sessionRoutes");
 const internalRoutes = require("./routes/internalRoutes");
 
@@ -38,12 +38,13 @@ app.use(
       // Allow requests with no origin (mobile apps, curl, etc.)
       if (!origin) return callback(null, true);
       // Allow configured CORS origin (dashboard)
-      if (CORS_ORIGIN === "*" || origin === CORS_ORIGIN) return callback(null, true);
+      if (CORS_ORIGIN === "*" || origin === CORS_ORIGIN)
+        return callback(null, true);
       // Allow embed endpoint from any origin (checked per-domain in embedController)
       return callback(null, true);
     },
     credentials: true,
-  })
+  }),
 );
 
 app.use(express.json({ limit: "100kb" }));
@@ -53,15 +54,17 @@ app.use(express.urlencoded({ extended: true }));
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 200 }));
 
 // ─── Health ───────────────────────────────────────────────────────────────────
-app.get("/health", (req, res) => res.json({ status: "UP", service: "voice-agent-service" }));
+app.get("/health", (req, res) =>
+  res.json({ status: "UP", service: "voice-agent-service" }),
+);
 
 // ─── Application Routes ───────────────────────────────────────────────────────
-app.use("/api/auth",     authRoutes);
-app.use("/api/agents",   agentRoutes);
-app.use("/api/embed",    embedRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/agents", agentRoutes);
+app.use("/api/embed", embedRoutes);
 app.use("/api/sessions", sessionRoutes);
-app.use("/api",          sessionRoutes);   // also mounts /api/agents/:agentId/sessions
-app.use("/internal",     internalRoutes);
+app.use("/api", sessionRoutes); // also mounts /api/agents/:agentId/sessions
+app.use("/api/internal", internalRoutes);
 
 // ─── Global Error Handler ─────────────────────────────────────────────────────
 app.use((err, req, res, next) => {
@@ -95,11 +98,11 @@ async function start() {
     }
 
     const server = app.listen(PORT, () =>
-      logger.info(`Voice Agent Service is UP and running on port ${PORT}`)
+      logger.info(`Voice Agent Service is UP and running on port ${PORT}`),
     );
 
     // Graceful shutdown
-    process.on("SIGINT",  () => shutdown(server));
+    process.on("SIGINT", () => shutdown(server));
     process.on("SIGTERM", () => shutdown(server));
   } catch (err) {
     logger.error(`Startup failed: ${err.stack || err.message || err}`);
