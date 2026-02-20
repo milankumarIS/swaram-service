@@ -5,8 +5,8 @@ const AgentSession = require("../models/AgentSession");
 const { Op } = require("sequelize");
 
 const PLAN_LIMITS = {
-  free:     10,
-  pro:      20,
+  free: 500,
+  pro: 20,
   business: 100,
 };
 
