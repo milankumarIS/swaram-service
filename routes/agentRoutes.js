@@ -12,21 +12,24 @@ router.use(authenticate);
 router.post(
   "/",
   cacheInvalidate((req) => `agents:user:${req.user.id}`),
-  controller.createAgent
+  controller.createAgent,
 );
+
+// POST /api/agents/preview — create temporary preview agent
+router.post("/preview", controller.createPreviewAgent);
 
 // GET /api/agents — list all agents for user
 router.get(
   "/",
   cacheGet((req) => `agents:user:${req.user.id}`),
-  controller.getAll
+  controller.getAll,
 );
 
 // GET /api/agents/:id — get single agent
 router.get(
   "/:id",
   cacheGet((req) => `agents:${req.params.id}`),
-  controller.getById
+  controller.getById,
 );
 
 // PATCH /api/agents/:id — update agent
@@ -34,7 +37,7 @@ router.patch(
   "/:id",
   cacheInvalidate((req) => `agents:${req.params.id}`),
   cacheInvalidate((req) => `agents:user:${req.user.id}`),
-  controller.updateAgent
+  controller.updateAgent,
 );
 
 // DELETE /api/agents/:id — deactivate agent
@@ -42,7 +45,7 @@ router.delete(
   "/:id",
   cacheInvalidate((req) => `agents:${req.params.id}`),
   cacheInvalidate((req) => `agents:user:${req.user.id}`),
-  controller.deleteAgent
+  controller.deleteAgent,
 );
 
 module.exports = router;

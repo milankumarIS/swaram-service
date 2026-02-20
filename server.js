@@ -8,6 +8,8 @@ const winston = require("winston");
 
 const { sequelize, testConnection, runInitSql } = require("./config/database");
 const redisClient = require("./config/redis");
+const Agent = require("./models/Agent");
+const { Op } = require("sequelize");
 
 // Routes
 const authRoutes = require("./routes/authRoutes");
@@ -15,6 +17,7 @@ const agentRoutes = require("./routes/agentRoutes");
 const embedRoutes = require("./routes/embedRoutes");
 const sessionRoutes = require("./routes/sessionRoutes");
 const internalRoutes = require("./routes/internalRoutes");
+const dashboardRoutes = require("./routes/dashboardRoutes");
 
 const logger = winston.createLogger({
   transports: [
@@ -65,6 +68,7 @@ app.use("/api/embed", embedRoutes);
 app.use("/api/sessions", sessionRoutes);
 app.use("/api", sessionRoutes); // also mounts /api/agents/:agentId/sessions
 app.use("/api/internal", internalRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 // ─── Global Error Handler ─────────────────────────────────────────────────────
 app.use((err, req, res, next) => {
@@ -73,6 +77,29 @@ app.use((err, req, res, next) => {
     error: err.message || "Internal server error",
   });
 });
+
+// ─── Preview Agent Cleanup Job ────────────────────────────────────────────────
+function startPreviewAgentCleanup() {
+  // Run every 60 seconds
+  setInterval(async () => {
+    try {
+      const result = await Agent.destroy({
+        where: {
+          is_preview: true,
+          delete_after: {
+            [Op.lt]: new Date(),
+          },
+        },
+      });
+      if (result > 0) {
+        logger.info(`Cleaned up ${result} expired preview agent(s)`);
+      }
+    } catch (error) {
+      logger.warn("Preview agent cleanup error:", error.message || error);
+    }
+  }, 60000); // 60 seconds
+  logger.info("Preview agent cleanup job started");
+}
 
 // ─── Startup ──────────────────────────────────────────────────────────────────
 async function start() {
@@ -96,6 +123,9 @@ async function start() {
       await sequelize.sync({ alter: true });
       logger.info("Sequelize models synced.");
     }
+
+    // Start cleanup job for preview agents (runs every minute)
+    startPreviewAgentCleanup();
 
     const server = app.listen(PORT, () =>
       logger.info(`Voice Agent Service is UP and running on port ${PORT}`),

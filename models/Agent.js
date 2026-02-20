@@ -91,10 +91,20 @@ const Agent = sequelize.define(
       allowNull: false,
       defaultValue: true,
     },
+    // Preview agent flags
+    is_preview: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+    delete_after: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
   },
   {
     tableName: "agents",
-    schema:'voiceagent',
+    schema: "voiceagent",
     timestamps: true,
     underscored: true,
     createdAt: "created_at",
@@ -104,8 +114,9 @@ const Agent = sequelize.define(
       { unique: true, fields: ["embed_token"] },
       { unique: true, fields: ["slug"] },
       { fields: ["is_active"] },
+      { fields: ["is_preview", "delete_after"] },
     ],
-  }
+  },
 );
 
 module.exports = Agent;
